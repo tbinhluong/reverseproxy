@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"strings"
 
 	"gopkg.in/yaml.v2"
 )
@@ -17,13 +16,6 @@ type Config struct {
 	Proxy struct {
 		Listen   Host      `yaml:"listen"`
 		Services []Service `yaml:"services"`
-		/*
-			Services []struct {
-				Name   string    `yaml:"name"`
-				Domain string    `yaml:"domain"`
-				Hosts  []Address `yaml:"hosts"`
-			} `yaml:"services"`
-		*/
 	} `yaml:"proxy"`
 }
 
@@ -46,8 +38,8 @@ func processError(err error) {
 }
 
 // Load parses the config YAML file
-func Load() (Config, error) {
-	fileName := configFileName()
+func Load(fileName string) (Config, error) {
+	//fileName := configFileName()
 
 	configFile, err := os.Open(fileName)
 	if err != nil {
@@ -63,11 +55,6 @@ func Load() (Config, error) {
 
 	initializeRoundRobin()
 	return proxyConfig, nil
-}
-
-// return the config YAML file
-func configFileName() string {
-	return os.Args[1]
 }
 
 func initializeRoundRobin() {
@@ -89,11 +76,13 @@ func GetServices() (map[string][]Host, error) {
 }
 
 // ChooseInstance chooses an instance to forward requests based on load balancing strategy
-func ChooseInstance(domain string, instances []Host) int {
-	if len(os.Args) == 2 && strings.ToUpper(os.Args[2]) == "ROUND-ROBIN" {
+func ChooseInstance(domain string, instances []Host, isRoundRobin *bool) int {
+	// forwards request to an instance in a round-robin strategy if configured
+	if *isRoundRobin {
 		roundRobin[domain] = (roundRobin[domain] + 1) % len(instances)
 		return roundRobin[domain]
 	}
 
-	return rand.Intn(len(instances)) - 1
+	// per default forwards request to an instance randomly
+	return rand.Intn(len(instances))
 }
