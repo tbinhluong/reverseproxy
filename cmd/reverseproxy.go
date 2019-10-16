@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	"io"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -18,7 +19,7 @@ var (
 )
 
 // handler sends requests to a service instance and forwards response back to origin
-func handler(w http.ResponseWriter, r *http.Request) {
+func handler(res http.ResponseWriter, req *http.Request) {
 	// get the map of available downstream services
 	services, err := configs.GetServices()
 	if err != nil {
@@ -26,17 +27,24 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// choose a instance to forward requests based on load balancing strategy
-	instance := configs.ChooseInstance(r.Host, services[r.Host], roundRobin)
+	instanceID := configs.ChooseInstance(req.Host, services[req.Host], roundRobin)
+	instanceURL := services[req.Host][instanceID].Address + ":" + services[req.Host][instanceID].Port
+	instance, _ := url.Parse(instanceURL)
 
 	// make request to chosen instance
-	resp, err := http.Get(services[r.Host][instance].Address + ":" + services[r.Host][instance].Port)
-	if err != nil {
-		log.Fatal(err)
-	}
+	proxy := httputil.NewSingleHostReverseProxy(instance)
+	proxy.ServeHTTP(res, req)
 
-	// receive and copy response body to forward back to origin
-	io.Copy(w, resp.Body)
-	resp.Body.Close()
+	/*
+		resp, err := http.Get()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// receive and copy response body to forward back to origin
+		io.Copy(w, resp.Body)
+		resp.Body.Close()
+	*/
 }
 
 // startProxy starts the proxy server on configured host and port

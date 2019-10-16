@@ -15,5 +15,5 @@ proxy:
     - name: binh
       domain: binh.deptrai.com:8080
       hosts:
-        - address: "http://google.com"
+        - address: "http://www.example.com"
           port: 80

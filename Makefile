@@ -2,7 +2,7 @@ build:
 	go build -o bin/reverseproxy 
 
 run:
-	go run main.go ./config/config.yaml
+	go run main.go --config.file=./config/config.yaml
 
 clean:
 	rm -f ./bin
