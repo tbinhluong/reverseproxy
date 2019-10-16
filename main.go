@@ -1,6 +1,6 @@
 package main
 
-import "./cmd"
+import "github.com/tbinhluong/reverseproxy/cmd"
 
 func main() {
 	cmd.Execute()

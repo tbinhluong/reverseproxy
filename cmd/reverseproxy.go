@@ -10,7 +10,7 @@ import (
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"../pkg/configs"
+	"github.com/tbinhluong/reverseproxy/pkg/configs"
 )
 
 var (
