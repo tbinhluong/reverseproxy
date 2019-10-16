@@ -1,7 +1,7 @@
 package configs
 
 import (
-	"fmt"
+	"log"
 	"math/rand"
 	"os"
 
@@ -32,24 +32,17 @@ type Host struct {
 	Port    string `yaml:"port"`
 }
 
-func processError(err error) {
-	fmt.Println(err)
-	os.Exit(2)
-}
-
 // Load parses the config YAML file
 func Load(fileName string) (Config, error) {
-	//fileName := configFileName()
-
 	configFile, err := os.Open(fileName)
 	if err != nil {
-		processError(err)
+		log.Fatalln(err)
 	}
 
 	decoder := yaml.NewDecoder(configFile)
 	err = decoder.Decode(&proxyConfig)
 	if err != nil {
-		processError(err)
+		log.Fatalln(err)
 	}
 	defer configFile.Close()
 

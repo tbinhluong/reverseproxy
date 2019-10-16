@@ -13,6 +13,8 @@ import (
 	"github.com/tbinhluong/reverseproxy/pkg/configs"
 )
 
+const scheme = "http"
+
 var (
 	configFile = kingpin.Flag("config.file", "Path of configuration YAML file.").Default("config.yaml").String()
 	roundRobin = kingpin.Flag("roundrobin", "Enable round-robin as load balancing strategy, otherwise randomly").Default("false").Bool()
@@ -23,34 +25,26 @@ func handler(res http.ResponseWriter, req *http.Request) {
 	// get the map of available downstream services
 	services, err := configs.GetServices()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 
 	// choose a instance to forward requests based on load balancing strategy
 	instanceID := configs.ChooseInstance(req.Host, services[req.Host], roundRobin)
-	instanceURL := services[req.Host][instanceID].Address + ":" + services[req.Host][instanceID].Port
+	instanceURL := scheme + "://" + services[req.Host][instanceID].Address + ":" + services[req.Host][instanceID].Port
 	instance, _ := url.Parse(instanceURL)
 
 	// make request to chosen instance
+	log.Println("Forwarding requests from ", req.Host, " to ", instanceURL)
 	proxy := httputil.NewSingleHostReverseProxy(instance)
 	proxy.ServeHTTP(res, req)
-
-	/*
-		resp, err := http.Get()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// receive and copy response body to forward back to origin
-		io.Copy(w, resp.Body)
-		resp.Body.Close()
-	*/
 }
 
 // startProxy starts the proxy server on configured host and port
 func startProxy(proxyConfig *configs.Config) error {
 	// Start the proxy and listen on configured address & port
 	server := (*proxyConfig).Proxy.Listen.Address + ":" + (*proxyConfig).Proxy.Listen.Port
+	log.Println("Start listening to HTTP requests on ", server)
+
 	http.HandleFunc("/", handler)
 
 	return http.ListenAndServe(server, nil)
@@ -64,13 +58,14 @@ func Execute() {
 	kingpin.Parse()
 
 	// Read config YAML file
+	log.Println("Loading configuration in ", *configFile)
 	proxyConfig, err := configs.Load(*configFile)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 
 	// Start proxy
 	if err := startProxy(&proxyConfig); err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 }

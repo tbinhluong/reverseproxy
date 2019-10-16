@@ -12,8 +12,8 @@ proxy:
           port: 9090
         - address: "10.0.0.2"
           port: 9090
-    - name: binh
-      domain: binh.deptrai.com:8080
+    - name: test-service
+      domain: test-service.com:8080
       hosts:
-        - address: "http://www.example.com"
-          port: 80
+        - address: "127.0.0.1"
+          port: 9090
