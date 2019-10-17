@@ -13,11 +13,11 @@ LABEL maintainer="Binh Luong <tbinhluong@gmail.com>"
 RUN mkdir -p /reverseproxy/config && \
     chown -R nobody:nogroup /reverseproxy
 
-COPY --from=0 /go/src/github.com/tbinhluong/reverseproxy/dist/reverseproxy /reverseproxy/.
-COPY --from=0 /go/src/github.com/tbinhluong/reverseproxy/config/config.yml /reverseproxy/config/config.yml
+COPY --from=0 /go/src/github.com/tbinhluong/reverseproxy/dist/reverseproxy /bin/reverseproxy/
+COPY --from=0 /go/src/github.com/tbinhluong/reverseproxy/config/config.yml /reverseproxy/.
 
 USER nobody
 EXPOSE 8080
 WORKDIR /reverseproxy
-ENTRYPOINT [ "./reverseproxy" ]
-CMD [ "--config.file=./config/config.yml" ]
+ENTRYPOINT [ "/bin/reverseproxy" ]
+CMD [ "--config.file=config.yml" ]

@@ -16,7 +16,7 @@ import (
 const scheme = "http"
 
 var (
-	configFile = kingpin.Flag("config.file", "Path of configuration YAML file.").Default("./config/config.yml").String()
+	configFile = kingpin.Flag("config.file", "Path of configuration YAML file.").Default("config.yml").String()
 	roundRobin = kingpin.Flag("roundrobin", "Enable round-robin as load balancing strategy, otherwise randomly").Default("false").Bool()
 )
 
