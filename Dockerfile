@@ -3,12 +3,12 @@ FROM golang:latest
 # Fetch source from github
 RUN go get github.com/tbinhluong/reverseproxy/...
 WORKDIR /go/src/github.com/tbinhluong/reverseproxy/
-RUN GOOS=linux make build
+RUN CGO_ENABLED=0 GOOS=linux make build
 
 # Multi-stage build docker image
 FROM alpine:latest
 
-LABEL maitainer="Binh Luong <tbinhluong@gmail.com>"
+LABEL maintainer="Binh Luong <tbinhluong@gmail.com>"
 
 RUN mkdir -p /reverseproxy/config && \
     chown -R nobody:nogroup /reverseproxy
