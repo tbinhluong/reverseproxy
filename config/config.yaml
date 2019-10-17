@@ -13,7 +13,7 @@ proxy:
         - address: "10.0.0.2"
           port: 9090
     - name: test-service
-      domain: test-service.com:8080
+      domain: test-service.com
       hosts:
         - address: "127.0.0.1"
           port: 9090
