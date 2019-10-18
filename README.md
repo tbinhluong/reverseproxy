@@ -8,6 +8,7 @@ A simple HTTP reverse proxy and load balancer that in written in Golang.
 - Listens to HTTP requests and forward them to downstream services
 - Supports 2 load balancing algorithms: randomly and round-robin
 - Provides endpoint /healthz for health check
+- Provides endpoint /metrics to indicate the availability SLI of the reverse proxy
 - Packaged as a single binary file (made with with go) and available as a [docker image](https://hub.docker.com/r/tbinhluong/reverseproxy)
 - Packaged as a [helm chart](https://github.com/tbinhluong/tbinhluong.github.io/tree/master/charts/reverseproxy-helm) 
 
