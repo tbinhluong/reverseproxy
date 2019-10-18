@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -25,12 +26,6 @@ var (
 // handler sends requests to a service instance and forwards response back to origin
 func handler(res http.ResponseWriter, req *http.Request) {
 
-	// check if it's a health check request
-	if isHealthCheck(req) {
-		log.Println("Health check")
-		return
-	}
-
 	// get the map of available downstream services
 	services, err := configs.GetServices()
 	if err != nil {
@@ -42,6 +37,11 @@ func handler(res http.ResponseWriter, req *http.Request) {
 	// choose a instance to forward requests based on load balancing strategy
 	instanceID, err := configs.ChooseInstance(req.Host, services[req.Host], roundRobin)
 	if err != nil {
+		// check if it's a health check request
+		if isHealthCheck(req) {
+			log.Println("Health check")
+			return
+		}
 		log.Println(err)
 		http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
@@ -50,16 +50,13 @@ func handler(res http.ResponseWriter, req *http.Request) {
 	instance, _ := url.Parse(instanceURL)
 
 	// make request to chosen instance
-	log.Println("Forwarding requests from ", req.Host, " to ", instanceURL)
+	log.Println("Forwarding requests", req.RequestURI, "to", req.Host, "on", instanceURL)
 	proxy := httputil.NewSingleHostReverseProxy(instance)
 	proxy.ServeHTTP(res, req)
 }
 
 func isHealthCheck(req *http.Request) bool {
-	proxyConfig, _ := configs.Load(*configFile)
-	server, _ := getProxyServer(&proxyConfig)
-
-	if req.Host == server && req.RequestURI == "/healthz" && req.Method == "GET" {
+	if req.RequestURI == "/healthz" && req.Method == "GET" {
 		return true
 	}
 	return false
@@ -72,11 +69,13 @@ func startProxy(proxyConfig *configs.Config) error {
 	if err != nil {
 		return err
 	}
-	log.Println("Start listening to HTTP requests on ", server)
+	log.Println("Start listening to HTTP requests on", server)
 
 	http.HandleFunc("/", handler)
 
-	return http.ListenAndServe(server, nil)
+	// in order to run as pod in k8s cluster, it should listen on any interface
+	listenAllInterfaces := strings.Replace(server, (*proxyConfig).Proxy.Listen.Address, "", -1)
+	return http.ListenAndServe(listenAllInterfaces, nil)
 }
 
 // return address of the proxy
@@ -95,10 +94,10 @@ func Execute() {
 	kingpin.Parse()
 
 	// Read config YAML file
-	log.Println("Loading configuration in ", *configFile)
+	log.Println("Loading configuration in", *configFile)
 	proxyConfig, err := configs.Load(*configFile)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "Error parsing config file"))
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "Error parsing config file %s", *configFile))
 		os.Exit(2)
 	}
 
