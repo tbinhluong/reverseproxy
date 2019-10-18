@@ -1,6 +1,20 @@
-# reverseproxy
+<h1 align="center">
+    # reverseproxy
+</h1>
 
-A simple HTTP reverse proxy and load balancer that in written in Golang.
+<p align="center">
+    A simple HTTP reverse proxy and load balancer that in written in Golang.
+    <br/><br/>
+    <a href="https://github.com/tbinhluong/reverseproxy/releases">
+        <img alt="latest version" src="https://img.shields.io/github/tag/tbinhluong/reverseproxy.svg" />
+    </a>
+    <a href="https://www.apache.org/licenses/LICENSE-2.0">
+        <img alt="Apache-2.0 License" src="https://img.shields.io/github/license/tbinhluong/reverseproxy.svg" />
+    </a>
+    <a href="https://hub.docker.com/r/tbinhluong/reverseproxy">
+        <img alt="Pulls from DockerHub" src="https://img.shields.io/docker/pulls/tbinhluong/reverseproxy.svg?style=flat-square" />
+    </a>
+</p>
 ---
 
 ## Features
