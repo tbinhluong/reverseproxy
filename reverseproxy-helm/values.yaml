@@ -1,0 +1,39 @@
+service:
+  type: ClusterIP
+  port: 8080
+
+replicaCount: 1
+
+container:
+  uid: 1001
+  port: 8080
+
+image:
+  repository: tbinhluong/reverseproxy
+  tag: latest
+  pullPolicy: Always
+
+terminationGracePeriodSecs: 60
+
+mountPath: /reverseproxy
+
+probe:
+  initialDelaySecs: 10
+  failureThreshold: 3
+  successThreshold: 1
+  periodSecs: 10
+  timeoutSecs: 10
+
+resources: {}
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

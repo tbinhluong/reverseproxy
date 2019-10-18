@@ -1,0 +1,17 @@
+apiVersion: v1
+entries:
+  reverseproxy-helm:
+  - apiVersion: v1
+    appVersion: 0.0.1
+    created: 2019-10-18T13:56:14.786938303Z
+    description: A Helm chart for a simple reverse proxy
+    digest: 85d413731edd0326ff4be91ba23d25e25f86db2ff9bb3c3447384cc02063286e
+    maintainers:
+    - email: tbinhluong@gmail.com
+      name: Binh Luong
+      url: github.com/tbinhluong
+    name: reverseproxy-helm
+    urls:
+    - https://tbinhluong.github.io/charts/reverseproxy-helm/reverseproxy-helm-0.0.1.tgz
+    version: 0.0.1
+generated: 2019-10-18T13:56:14.786477128Z

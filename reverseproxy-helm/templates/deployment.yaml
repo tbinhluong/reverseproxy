@@ -1,0 +1,54 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSecs }}
+      containers:
+        - name: {{ .Release.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+          - name: configs
+            mountPath: {{ .Values.mountPath }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.container.port }}
+              protocol: TCP
+          securityContext:
+            runAsUser: {{ .Values.container.uid }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.probe.initialDelaySecs }}
+            periodSeconds: {{ .Values.probe.periodSecs }}
+            successThreshold: {{ .Values.probe.successThreshold }}
+            failureThreshold: {{ .Values.probe.failureThreshold }}
+            timeoutSeconds: {{ .Values.probe.timeoutSecs }}
+            httpGet:
+              path: /healthz
+              port: 8080
+          readinessProbe:
+            periodSeconds: {{ .Values.probe.periodSecs }}
+            successThreshold: {{ .Values.probe.successThreshold }}
+            failureThreshold: {{ .Values.probe.failureThreshold }}
+            timeoutSeconds: {{ .Values.probe.timeoutSecs }}
+            httpGet:
+              path: /healthz
+              port: 8080
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      volumes:
+      - name: configs
+        configMap:
+          name: {{ .Release.Name }}-configmap
+
