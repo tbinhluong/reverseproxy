@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"errors"
 	"log"
 	"math/rand"
 	"os"
@@ -61,6 +62,10 @@ func initializeRoundRobin() {
 func GetServices() (map[string][]Host, error) {
 	var services = make(map[string][]Host)
 
+	if len(proxyConfig.Proxy.Services) == 0 {
+		return nil, errors.New("No downstream services specified")
+	}
+
 	for _, service := range proxyConfig.Proxy.Services {
 		services[service.Domain] = service.Hosts
 	}
@@ -69,13 +74,17 @@ func GetServices() (map[string][]Host, error) {
 }
 
 // ChooseInstance chooses an instance to forward requests based on load balancing strategy
-func ChooseInstance(domain string, instances []Host, isRoundRobin *bool) int {
+func ChooseInstance(domain string, instances []Host, isRoundRobin *bool) (int, error) {
+	if len(instances) == 0 {
+		return 0, errors.New("Downstream service not found")
+	}
+
 	// forwards request to an instance in a round-robin strategy if configured
 	if *isRoundRobin {
 		roundRobin[domain] = (roundRobin[domain] + 1) % len(instances)
-		return roundRobin[domain]
+		return roundRobin[domain], nil
 	}
 
 	// per default forwards request to an instance randomly
-	return rand.Intn(len(instances))
+	return rand.Intn(len(instances)), nil
 }

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/tbinhluong/reverseproxy/pkg/configs"
@@ -22,14 +24,28 @@ var (
 
 // handler sends requests to a service instance and forwards response back to origin
 func handler(res http.ResponseWriter, req *http.Request) {
+
+	// check if it's a health check request
+	if isHealthCheck(req) {
+		log.Println("Health check")
+		return
+	}
+
 	// get the map of available downstream services
 	services, err := configs.GetServices()
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		http.Error(res, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	// choose a instance to forward requests based on load balancing strategy
-	instanceID := configs.ChooseInstance(req.Host, services[req.Host], roundRobin)
+	instanceID, err := configs.ChooseInstance(req.Host, services[req.Host], roundRobin)
+	if err != nil {
+		log.Println(err)
+		http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
 	instanceURL := scheme + "://" + services[req.Host][instanceID].Address + ":" + services[req.Host][instanceID].Port
 	instance, _ := url.Parse(instanceURL)
 
@@ -39,15 +55,36 @@ func handler(res http.ResponseWriter, req *http.Request) {
 	proxy.ServeHTTP(res, req)
 }
 
+func isHealthCheck(req *http.Request) bool {
+	proxyConfig, _ := configs.Load(*configFile)
+	server, _ := getProxyServer(&proxyConfig)
+
+	if req.Host == server && req.RequestURI == "/healthz" && req.Method == "GET" {
+		return true
+	}
+	return false
+}
+
 // startProxy starts the proxy server on configured host and port
 func startProxy(proxyConfig *configs.Config) error {
 	// Start the proxy and listen on configured address & port
-	server := (*proxyConfig).Proxy.Listen.Address + ":" + (*proxyConfig).Proxy.Listen.Port
+	server, err := getProxyServer(proxyConfig)
+	if err != nil {
+		return err
+	}
 	log.Println("Start listening to HTTP requests on ", server)
 
 	http.HandleFunc("/", handler)
 
 	return http.ListenAndServe(server, nil)
+}
+
+// return address of the proxy
+func getProxyServer(proxyConfig *configs.Config) (string, error) {
+	if (*proxyConfig).Proxy.Listen.Address == "" || (*proxyConfig).Proxy.Listen.Port == "" {
+		return "", errors.New("Reverse proxy address or port not valid")
+	}
+	return (*proxyConfig).Proxy.Listen.Address + ":" + (*proxyConfig).Proxy.Listen.Port, nil
 }
 
 // main function
@@ -61,11 +98,13 @@ func Execute() {
 	log.Println("Loading configuration in ", *configFile)
 	proxyConfig, err := configs.Load(*configFile)
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "Error parsing config file"))
+		os.Exit(2)
 	}
 
 	// Start proxy
 	if err := startProxy(&proxyConfig); err != nil {
-		log.Fatalln(err)
+		fmt.Fprintln(os.Stderr, errors.Wrap(err, "Error starting proxy"))
+		os.Exit(2)
 	}
 }
