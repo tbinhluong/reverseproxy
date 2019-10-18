@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -33,12 +34,40 @@ import (
 const scheme = "http"
 
 var (
-	configFile = kingpin.Flag("config.file", "Path of configuration YAML file.").Default("config.yml").String()
-	roundRobin = kingpin.Flag("roundrobin", "Enable round-robin as load balancing strategy, otherwise randomly").Default("false").Bool()
+	configFile    = kingpin.Flag("config.file", "Path of configuration YAML file.").Default("config.yml").String()
+	roundRobin    = kingpin.Flag("roundrobin", "Enable round-robin as load balancing strategy, otherwise randomly").Default("false").Bool()
+	goodResponses uint32
+	totalRequests uint32
 )
+
+type Metrics struct {
+	GoodResponses uint32
+	TotalRequests uint32
+	SLI           string
+}
+
+type wrapperResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+// A wrapper of http.ResponseWriter to get status code of response
+func NewWrapperResponseWriter(w http.ResponseWriter) *wrapperResponseWriter {
+	// WriteHeader(int) is not called if our response implicitly returns 200 OK, so
+	// we default to that status code.
+	return &wrapperResponseWriter{w, http.StatusOK}
+}
+
+func (res *wrapperResponseWriter) WriteHeader(code int) {
+	res.statusCode = code
+	res.ResponseWriter.WriteHeader(code)
+}
 
 // handler sends requests to a service instance and forwards response back to origin
 func handler(res http.ResponseWriter, req *http.Request) {
+
+	// increase the number of total requests by 1 to measure SLI
+	totalRequests++
 
 	// get the map of available downstream services
 	services, err := configs.GetServices()
@@ -56,6 +85,14 @@ func handler(res http.ResponseWriter, req *http.Request) {
 			log.Println("Health check")
 			return
 		}
+		if getMetrics(req) {
+			// goodResponses+1 because it is increased later
+			sli := float32(goodResponses+1) / float32(totalRequests) * 100
+			stringSLI := fmt.Sprintf("%f%%", sli)
+			metrics := Metrics{GoodResponses: goodResponses + 1, TotalRequests: totalRequests, SLI: stringSLI}
+			json.NewEncoder(res).Encode(metrics)
+			return
+		}
 		log.Println(err)
 		http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
@@ -69,8 +106,28 @@ func handler(res http.ResponseWriter, req *http.Request) {
 	proxy.ServeHTTP(res, req)
 }
 
+// Implement a new handler to get the status code of response
+func wrapperHandler(wrappedHandler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		lrw := NewWrapperResponseWriter(w)
+		wrappedHandler.ServeHTTP(lrw, req)
+		statusCode := lrw.statusCode
+		log.Printf("<-- %d %s", statusCode, http.StatusText(statusCode))
+		if statusCode < 500 {
+			goodResponses++
+		}
+	})
+}
+
 func isHealthCheck(req *http.Request) bool {
 	if req.RequestURI == "/healthz" && req.Method == "GET" {
+		return true
+	}
+	return false
+}
+
+func getMetrics(req *http.Request) bool {
+	if req.RequestURI == "/metrics" && req.Method == "GET" {
 		return true
 	}
 	return false
@@ -85,7 +142,8 @@ func startProxy(proxyConfig *configs.Config) error {
 	}
 	log.Println("Start listening to HTTP requests on", server)
 
-	http.HandleFunc("/", handler)
+	wHandler := wrapperHandler(http.HandlerFunc(handler))
+	http.Handle("/", wHandler)
 
 	// in order to run as pod in k8s cluster, it should listen on any interface
 	listenAllInterfaces := strings.Replace(server, (*proxyConfig).Proxy.Listen.Address, "", -1)
