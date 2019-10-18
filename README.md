@@ -1,11 +1,7 @@
 # reverseproxy
 
 A simple HTTP reverse proxy and load balancer that in written in Golang.
-Traefik integrates with your existing infrastructure components ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), ...) and configures itself automatically and dynamically.
-
 ---
-
-:warning: Please be aware that the old configurations for Traefik v1.X are NOT compatible with the v2.X config as of now. If you're running v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/).
 
 ## Features
 
@@ -16,7 +12,7 @@ Traefik integrates with your existing infrastructure components ([Docker](https:
 - Packaged as a [helm chart](https://github.com/tbinhluong/tbinhluong.github.io/tree/master/charts/reverseproxy-helm) 
 
 
-## Download
+## Getting Started
 
 - Grab the latest binary from the [releases](https://github.com/tbinhluong/reverseproxy/releases) page and run it with the [sample configuration file](https://raw.githubusercontent.com/tbinhluong/reverseproxy/master/config/config.yml):
 
@@ -28,6 +24,13 @@ Traefik integrates with your existing infrastructure components ([Docker](https:
 
 ```shell
 docker run -d -p 8080:8080  -v $PWD/config.yml:/reverseproxy/config.yml reverseproxy
+```
+
+- Or use the helm chart
+
+```shell
+helm repo add myrepo https://tbinhluong.github.io/
+helm install myrepo/reverseproxy-helm --name=reverseproxy
 ```
 
 - Or get the sources:
