@@ -3,6 +3,7 @@ BINARY_NAME=reverseproxy
 BINARY_LINUX=$(BINARY_NAME)_linux
 BINARY_WINDOWS=$(BINARY_NAME)_windows
 BINARY_BSD=$(BINARY_NAME)_freebsd
+BINARY_DARWIN=$(BINARY_NAME)_darwin
 
 GO=go
 GOBUILD=$(GO) build
@@ -21,6 +22,9 @@ build_windows:
 
 build_freebsd:
 	GOOS=freebsd GOARCH=amd64 $(GOBUILD) -ldflags "-s -w" -o $(DIST_DIR)/$(BINARY_BSD)  $(MAIN_FILE)
+
+build_darwin:
+	GOOS=darwin GOARCH=amd64 $(GOBUILD) -ldflags "-s -w" -o $(DIST_DIR)/$(BINARY_DARWIN)  $(MAIN_FILE)
 
 clean:
 	$(GOCLEAN)
