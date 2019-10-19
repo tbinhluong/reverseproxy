@@ -1,5 +1,5 @@
 <h1 align="center">
-    # reverseproxy
+    reverseproxy
 </h1>
 
 <p align="center">
@@ -10,6 +10,9 @@
     </a>
     <a href="https://www.apache.org/licenses/LICENSE-2.0">
         <img alt="Apache-2.0 License" src="https://img.shields.io/github/license/tbinhluong/reverseproxy.svg" />
+    </a>
+    <a href="https://microbadger.com/images/tbinhluong/reverseproxy">
+      <img alt="Microbadger" src="https://images.microbadger.com/badges/image/tbinhluong/reverseproxy.svg" />
     </a>
     <a href="https://hub.docker.com/r/tbinhluong/reverseproxy">
         <img alt="Pulls from DockerHub" src="https://img.shields.io/docker/pulls/tbinhluong/reverseproxy.svg?style=flat-square" />
