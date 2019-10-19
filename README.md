@@ -18,7 +18,6 @@
         <img alt="Pulls from DockerHub" src="https://img.shields.io/docker/pulls/tbinhluong/reverseproxy.svg?style=flat-square" />
     </a>
 </p>
----
 
 ## Features
 
