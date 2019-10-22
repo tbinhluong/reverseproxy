@@ -42,7 +42,7 @@
 - Or use the official tiny Docker image and run it with the [sample configuration file](https://raw.githubusercontent.com/tbinhluong/reverseproxy/master/config/config.yml):
 
 ```shell
-docker run -d -p 8080:8080  -v $PWD/config.yml:/reverseproxy/config.yml tbinhluong/reverseproxy:latest
+docker run -d -p 8080:8080  -v $PWD/config.yml:/reverseproxy/config.yml tbinhluong/reverseproxy
 ```
 
   - Or use the helm chart
